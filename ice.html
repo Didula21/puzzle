@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MOS Project Review - Ice Breaker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #2d1b69 0%, #1a0b3d 50%, #0f2862 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: white;
+        }
+
+        /* Header Section */
+        .header {
+            position: relative;
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 20px 0;
+        }
+
+        .logo {
+            position: absolute;
+            top: 0;
+            width: 80px;
+            height: 80px;
+            object-fit: contain;
+            filter: brightness(1.2);
+        }
+
+        .logo-left {
+            left: 20px;
+        }
+
+        .logo-right {
+            right: 20px;
+        }
+
+        h1 {
+            color: #ffffff;
+            font-size: 2em;
+            text-shadow: 0 2px 20px rgba(138, 99, 255, 0.6);
+            padding: 20px 120px;
+            letter-spacing: 0.5px;
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+            background: rgba(30, 20, 60, 0.7);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(138, 99, 255, 0.2);
+        }
+
+        /* Crossword Grid */
+        .crossword-wrapper {
+            display: flex;
+            justify-content: center;
+            margin: 30px 0;
+        }
+
+        .crossword-grid {
+            display: inline-grid;
+            grid-template-columns: repeat(8, 55px);
+            grid-template-rows: repeat(8, 55px);
+            gap: 3px;
+        }
+
+        .grid-cell {
+            width: 55px;
+            height: 55px;
+            border: 2px solid transparent;
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        /* Active cell with letter */
+        .grid-cell.active {
+            background: rgba(138, 99, 255, 0.15);
+            border-color: rgba(138, 99, 255, 0.5);
+            box-shadow: 0 0 15px rgba(138, 99, 255, 0.3);
+        }
+
+        /* Empty/blocked cell */
+        .grid-cell.empty {
+            background: transparent;
+        }
+
+        /* Letter animation */
+        .grid-cell .letter {
+            color: #ffffff;
+            opacity: 0;
+            transform: scale(0) rotate(180deg);
+            transition: all 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            text-shadow: 0 0 10px rgba(138, 99, 255, 0.5);
+        }
+
+        .grid-cell .letter.revealed {
+            opacity: 1;
+            transform: scale(1) rotate(0deg);
+        }
+
+        /* Clues Section */
+        .clues {
+            margin: 30px 0;
+            text-align: left;
+        }
+
+        .clue-item {
+            margin: 15px 0;
+            padding: 10px 15px;
+            background: rgba(138, 99, 255, 0.1);
+            border-radius: 10px;
+            border-left: 4px solid rgba(138, 99, 255, 0.6);
+        }
+
+        .clue-label {
+            font-weight: 600;
+            color: #b794f6;
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+
+        .clue-text {
+            font-size: 14px;
+            color: #d8d8d8;
+            font-style: italic;
+        }
+
+        /* Buttons */
+        .controls {
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 15px 35px;
+            font-size: 16px;
+            font-weight: 600;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .reveal-btn {
+            background: linear-gradient(135deg, #8a63ff 0%, #6b46e5 100%);
+            color: white;
+        }
+
+        .reveal-btn:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 25px rgba(138, 99, 255, 0.5);
+        }
+
+        .reveal-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .reset-btn {
+            background: linear-gradient(135deg, #ff6b9d 0%, #c44569 100%);
+            color: white;
+        }
+
+        .reset-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 25px rgba(255, 107, 157, 0.5);
+        }
+
+        /* Victory Message */
+        .victory-message {
+            font-size: 36px;
+            font-weight: bold;
+            background: linear-gradient(135deg, #8a63ff 0%, #ff6b9d 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-align: center;
+            margin-top: 30px;
+            opacity: 0;
+            transform: translateY(30px) scale(0.8);
+            transition: all 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            text-shadow: 0 0 30px rgba(138, 99, 255, 0.8);
+        }
+
+        .victory-message.show {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+
+        /* Status Text */
+        .status {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 18px;
+            color: #b794f6;
+            font-weight: 600;
+            min-height: 30px;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.4em;
+                padding: 20px 100px;
+            }
+
+            .logo {
+                width: 60px;
+                height: 60px;
+            }
+
+            .logo-left {
+                left: 10px;
+            }
+
+            .logo-right {
+                right: 10px;
+            }
+
+            .container {
+                padding: 25px;
+            }
+
+            .crossword-grid {
+                grid-template-columns: repeat(8, 45px);
+                grid-template-rows: repeat(8, 45px);
+                gap: 2px;
+            }
+
+            .grid-cell {
+                width: 45px;
+                height: 45px;
+                font-size: 20px;
+            }
+
+            .victory-message {
+                font-size: 28px;
+            }
+
+            button {
+                padding: 12px 25px;
+                font-size: 14px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 1.1em;
+                padding: 15px 80px;
+            }
+
+            .logo {
+                width: 50px;
+                height: 50px;
+            }
+
+            .crossword-grid {
+                grid-template-columns: repeat(8, 38px);
+                grid-template-rows: repeat(8, 38px);
+            }
+
+            .grid-cell {
+                width: 38px;
+                height: 38px;
+                font-size: 18px;
+            }
+
+            .container {
+                padding: 20px;
+            }
+
+            .victory-message {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header with logos and title -->
+    <div class="header">
+        <img src="MAS2.png" alt="Logo 1" class="logo logo-left" 
+     style="width: 100px; height: auto;" 
+     onerror="this.style.display='none'">
+
+        <h1>MOS Project Review – Ice Breaker Team A</h1>
+        <img src="MAS1.png" alt="Logo 1" class="logo logo-right" 
+     style="width: 200px; height: auto;" 
+     onerror="this.style.display='none'">
+
+    </div>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Crossword Grid -->
+        <div class="crossword-wrapper">
+            <div class="crossword-grid" id="crosswordGrid"></div>
+        </div>
+
+
+
+        <!-- Controls -->
+        <div class="controls">
+            <div class="buttons">
+                <button class="reveal-btn" id="revealBtn">🔍 Reveal Letter</button>
+                <button class="reset-btn" id="resetBtn">🔄 Reset Puzzle</button>
+            </div>
+            <div class="status" id="status"></div>
+        </div>
+
+        <!-- Victory Message -->
+        <div class="victory-message" id="victoryMessage">🎉 You are WON! 🎉</div>
+    </div>
+
+    <script>
+        /**
+         * Crossword puzzle configuration
+         * Grid is 8x8, with words placed to intersect at specific letters
+         * 
+         * Layout:
+         * - INSPIRE: Row 2, starting at column 1 (horizontal)
+         * - TEAMWORK: Column 5, starting at row 1 (vertical) - shares 'E' with INSPIRE
+         * - SUCCESS: Column 2, starting at row 3 (vertical) - shares 'S' with INSPIRE
+         */
+        
+        const GRID_SIZE = 8;
+        
+        // Define word placements
+        const words = [
+            {
+                word: 'INSPIRE',
+                row: 2,
+                col: 1,
+                direction: 'horizontal',
+                clue: 'To motivate or encourage others.'
+            },
+            {
+                word: 'TITANIC',
+                row: 1,
+                col: 5,
+                direction: 'vertical',
+                clue: 'Working together to achieve goals.'
+            },
+            {
+                word: 'ORMAL',
+                row: 3,
+                col: 2,
+                direction: 'vertical',
+                clue: 'Achieving a desired goal.'
+            }
+        ];
+
+        // Track which positions have been revealed
+        let revealedPositions = new Set();
+
+        /**
+         * Get the letter at a specific grid position
+         * Returns null if position is empty
+         */
+        function getLetterAt(row, col) {
+            for (const wordData of words) {
+                if (wordData.direction === 'horizontal') {
+                    if (row === wordData.row && 
+                        col >= wordData.col && 
+                        col < wordData.col + wordData.word.length) {
+                        return wordData.word[col - wordData.col];
+                    }
+                } else { // vertical
+                    if (col === wordData.col && 
+                        row >= wordData.row && 
+                        row < wordData.row + wordData.word.length) {
+                        return wordData.word[row - wordData.row];
+                    }
+                }
+            }
+            return null;
+        }
+
+        /**
+         * Initialize the crossword grid
+         * Creates cells for each position in the grid
+         */
+        function initializeGrid() {
+            const grid = document.getElementById('crosswordGrid');
+            grid.innerHTML = '';
+
+            for (let row = 0; row < GRID_SIZE; row++) {
+                for (let col = 0; col < GRID_SIZE; col++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'grid-cell';
+                    cell.id = `cell-${row}-${col}`;
+
+                    const letter = getLetterAt(row, col);
+                    
+                    if (letter) {
+                        // This position contains a letter
+                        cell.classList.add('active');
+                        const letterSpan = document.createElement('span');
+                        letterSpan.className = 'letter';
+                        letterSpan.textContent = letter;
+                        cell.appendChild(letterSpan);
+                    } else {
+                        // Empty cell
+                        cell.classList.add('empty');
+                    }
+
+                    grid.appendChild(cell);
+                }
+            }
+        }
+
+        /**
+         * Get all positions that contain letters
+         * Returns array of position strings in format "row-col"
+         */
+        function getAllLetterPositions() {
+            const positions = [];
+            for (let row = 0; row < GRID_SIZE; row++) {
+                for (let col = 0; col < GRID_SIZE; col++) {
+                    if (getLetterAt(row, col)) {
+                        positions.push(`${row}-${col}`);
+                    }
+                }
+            }
+            return positions;
+        }
+
+        /**
+         * Reveal a random unrevealed letter
+         * Adds animation and updates game state
+         */
+        function revealRandomLetter() {
+            const allPositions = getAllLetterPositions();
+            const unrevealedPositions = allPositions.filter(pos => !revealedPositions.has(pos));
+
+            // Check if all letters are revealed
+            if (unrevealedPositions.length === 0) {
+                showVictory();
+                return;
+            }
+
+            // Pick a random unrevealed position
+            const randomIndex = Math.floor(Math.random() * unrevealedPositions.length);
+            const position = unrevealedPositions[randomIndex];
+            revealedPositions.add(position);
+
+            // Reveal the letter with animation
+            const cell = document.getElementById(`cell-${position}`);
+            const letterSpan = cell.querySelector('.letter');
+            letterSpan.classList.add('revealed');
+
+            // Update status
+            const remaining = unrevealedPositions.length - 1;
+            updateStatus(remaining);
+
+            // Check if puzzle is complete
+            if (remaining === 0) {
+                showVictory();
+            }
+        }
+
+        /**
+         * Update the status message showing remaining letters
+         */
+        function updateStatus(remaining) {
+            const statusDiv = document.getElementById('status');
+            if (remaining === 0) {
+                statusDiv.textContent = '';
+            } else {
+                statusDiv.textContent = `${remaining} letter${remaining !== 1 ? 's' : ''} remaining`;
+            }
+        }
+
+        /**
+         * Show the victory message and disable the reveal button
+         */
+        function showVictory() {
+            const victoryMessage = document.getElementById('victoryMessage');
+            const revealBtn = document.getElementById('revealBtn');
+            
+            victoryMessage.classList.add('show');
+            revealBtn.disabled = true;
+            
+            // Clear status
+            document.getElementById('status').textContent = '';
+        }
+
+        /**
+         * Reset the puzzle to its initial state
+         * Clears all revealed letters and re-enables controls
+         */
+        function resetPuzzle() {
+            // Clear revealed positions
+            revealedPositions.clear();
+
+            // Hide victory message
+            const victoryMessage = document.getElementById('victoryMessage');
+            victoryMessage.classList.remove('show');
+
+            // Re-enable reveal button
+            const revealBtn = document.getElementById('revealBtn');
+            revealBtn.disabled = false;
+
+            // Reinitialize the grid
+            initializeGrid();
+
+            // Clear status
+            document.getElementById('status').textContent = '';
+        }
+
+        // Event listeners
+        document.getElementById('revealBtn').addEventListener('click', revealRandomLetter);
+        document.getElementById('resetBtn').addEventListener('click', resetPuzzle);
+
+        // Initialize the puzzle when page loads
+        initializeGrid();
+    </script>
+</body>
+</html>
